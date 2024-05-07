@@ -1,0 +1,30 @@
+stages:
+  - deploy
+
+deploy:
+  image: ubuntu:latest
+  stage: deploy
+  only:
+    - microFrontEnd
+  # before_script:
+  #   - apt-get -yq update
+  #   - apt-get -yqq install ssh
+  #   - install -m 600 -D /dev/null ~/.ssh/id_rsa
+  #   - echo "$SSH_PRIVATE_KEY" | base64 -d > ~/.ssh/id_rsa
+  #   - ssh-keyscan -H $SSH_HOST > ~/.ssh/known_hosts
+  before_script:
+    - apt-get update -yqq
+    - apt-get install -yqq git
+    # Setup SSH deploy key
+    - "which ssh-agent || ( apt-get install -qq openssh-client )"
+    - eval $(ssh-agent -s)
+    - ssh-add <(echo "$SSH_PRIVATE_KEY")
+    - mkdir -p ~/.ssh
+    - '[[ -f /.dockerenv ]] && echo -e "Host *\n\tStrictHostKeyChecking no\n\n" > ~/.ssh/config'
+
+
+  script:
+    - ssh $SSH_USER@$SERVER_IP "cd /home/imensoss/ultron-dev.imenso.in && git checkout microFrontEnd && git pull && exit"
+    - echo "Deploy Successfull"
+      #after_script:
+      #- rm -rf ~/.ssh
